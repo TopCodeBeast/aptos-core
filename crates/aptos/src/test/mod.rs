@@ -12,11 +12,12 @@ use crate::{
     common::{
         init::{InitTool, Network},
         types::{
-            account_address_from_public_key, AccountAddressWrapper, CliError, CliTypedResult,
-            EncodingOptions, EntryFunctionArguments, FaucetOptions, GasOptions, KeyType,
-            MoveManifestAccountWrapper, MovePackageDir, OptionalPoolAddressArgs, PoolAddressArgs,
-            PrivateKeyInputOptions, PromptOptions, PublicKeyInputOptions, RestOptions, RngArgs,
-            SaveFile, TransactionOptions, TransactionSummary,
+            account_address_from_public_key, AccountAddressWrapper, AuthenticationKeyInputOptions,
+            CliError, CliTypedResult, EncodingOptions, EntryFunctionArguments, FaucetOptions,
+            GasOptions, KeyType, MoveManifestAccountWrapper, MovePackageDir,
+            OptionalPoolAddressArgs, PoolAddressArgs, PrivateKeyInputOptions, PromptOptions,
+            PublicKeyInputOptions, RestOptions, RngArgs, SaveFile, TransactionOptions,
+            TransactionSummary,
         },
         utils::write_to_file,
     },
@@ -242,7 +243,7 @@ impl CliTestFramework {
             rest_options: self.rest_options(),
             encoding_options: Default::default(),
             profile_options: Default::default(),
-            authentication_key_options: Default::default(),
+            authentication_key_options: AuthenticationKeyInputOptions::from_public_key(public_key),
         }
         .execute()
         .await
