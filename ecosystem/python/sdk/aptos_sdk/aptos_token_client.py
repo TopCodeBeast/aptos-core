@@ -14,7 +14,6 @@ from .type_tag import StructTag, TypeTag
 
 
 class Object:
-
     allow_ungated_transfer: bool
     owner: AccountAddress
 
@@ -36,7 +35,6 @@ class Object:
 
 
 class Collection:
-
     creator: AccountAddress
     description: str
     name: str
@@ -64,7 +62,6 @@ class Collection:
 
 
 class Royalty:
-
     numerator: int
     denominator: int
     payee_address: AccountAddress
@@ -89,9 +86,8 @@ class Royalty:
 
 
 class Token:
-
     collection: AccountAddress
-    collection_id: int
+    index: int
     description: str
     name: str
     uri: str
@@ -99,27 +95,27 @@ class Token:
     struct_tag: str = "0x4::token::Token"
 
     def __init__(
-        self,
-        collection: AccountAddress,
-        collection_id: int,
-        description: str,
-        name: str,
-        uri: str,
+            self,
+            collection: AccountAddress,
+            index: int,
+            description: str,
+            name: str,
+            uri: str,
     ):
         self.collection = collection
-        self.collection_id = collection_id
+        self.index = index
         self.description = description
         self.name = name
         self.uri = uri
 
     def __str__(self) -> str:
-        return f"Token[collection: {self.collection}, collection_id: {self.collection_id}, description: {self.description}, name: {self.name}, uri: {self.uri}]"
+        return f"Token[collection: {self.collection}, index: {self.index}, description: {self.description}, name: {self.name}, uri: {self.uri}]"
 
     @staticmethod
     def parse(resource: dict[str, Any]):
         return Token(
             AccountAddress.from_hex(resource["collection"]["inner"]),
-            int(resource["collection_id"]),
+            int(resource["index"]),
             resource["description"],
             resource["name"],
             resource["uri"],
@@ -138,7 +134,6 @@ class InvalidPropertyType(Exception):
 
 
 class Property:
-
     name: str
     property_type: str
     value: Any
@@ -259,7 +254,6 @@ class Property:
 
 
 class PropertyMap:
-
     properties: List[Property]
 
     struct_tag: str = "0x4::property_map::PropertyMap"
@@ -345,23 +339,23 @@ class AptosTokenClient:
         return ReadObject(resources)
 
     async def create_collection(
-        self,
-        creator: Account,
-        description: str,
-        max_supply: int,
-        name: str,
-        uri: str,
-        mutable_description: bool,
-        mutable_royalty: bool,
-        mutable_uri: bool,
-        mutable_token_description: bool,
-        mutable_token_name: bool,
-        mutable_token_properties: bool,
-        mutable_token_uri: bool,
-        tokens_burnable_by_creator: bool,
-        tokens_freezable_by_creator: bool,
-        royalty_numerator: int,
-        royalty_denominator: int,
+            self,
+            creator: Account,
+            description: str,
+            max_supply: int,
+            name: str,
+            uri: str,
+            mutable_description: bool,
+            mutable_royalty: bool,
+            mutable_uri: bool,
+            mutable_token_description: bool,
+            mutable_token_name: bool,
+            mutable_token_properties: bool,
+            mutable_token_uri: bool,
+            tokens_burnable_by_creator: bool,
+            tokens_freezable_by_creator: bool,
+            royalty_numerator: int,
+            royalty_denominator: int,
     ) -> str:
         transaction_arguments = [
             TransactionArgument(description, Serializer.str),
@@ -394,13 +388,13 @@ class AptosTokenClient:
         return await self.client.submit_bcs_transaction(signed_transaction)
 
     async def mint_token(
-        self,
-        creator: Account,
-        collection: str,
-        description: str,
-        name: str,
-        uri: str,
-        properties: PropertyMap,
+            self,
+            creator: Account,
+            collection: str,
+            description: str,
+            name: str,
+            uri: str,
+            properties: PropertyMap,
     ) -> str:
         (property_names, property_types, property_values) = properties.to_tuple()
         transaction_arguments = [
@@ -432,14 +426,14 @@ class AptosTokenClient:
         return await self.client.submit_bcs_transaction(signed_transaction)
 
     async def mint_soul_bound_token(
-        self,
-        creator: Account,
-        collection: str,
-        description: str,
-        name: str,
-        uri: str,
-        properties: PropertyMap,
-        soul_bound_to: AccountAddress,
+            self,
+            creator: Account,
+            collection: str,
+            description: str,
+            name: str,
+            uri: str,
+            properties: PropertyMap,
+            soul_bound_to: AccountAddress,
     ):
         (property_names, property_types, property_values) = properties.to_tuple()
         transaction_arguments = [
@@ -511,7 +505,7 @@ class AptosTokenClient:
         return await self.client.submit_bcs_transaction(signed_transaction)
 
     async def add_token_property(
-        self, creator: Account, token: AccountAddress, prop: Property
+            self, creator: Account, token: AccountAddress, prop: Property
     ) -> str:
         transaction_arguments = [TransactionArgument(token, Serializer.struct)]
         transaction_arguments.extend(prop.to_transaction_arguments())
@@ -529,7 +523,7 @@ class AptosTokenClient:
         return await self.client.submit_bcs_transaction(signed_transaction)
 
     async def remove_token_property(
-        self, creator: Account, token: AccountAddress, name: str
+            self, creator: Account, token: AccountAddress, name: str
     ) -> str:
         transaction_arguments = [
             TransactionArgument(token, Serializer.struct),
@@ -549,7 +543,7 @@ class AptosTokenClient:
         return await self.client.submit_bcs_transaction(signed_transaction)
 
     async def update_token_property(
-        self, creator: Account, token: AccountAddress, prop: Property
+            self, creator: Account, token: AccountAddress, prop: Property
     ) -> str:
         transaction_arguments = [TransactionArgument(token, Serializer.struct)]
         transaction_arguments.extend(prop.to_transaction_arguments())
@@ -557,6 +551,29 @@ class AptosTokenClient:
         payload = EntryFunction.natural(
             "0x4::aptos_token",
             "update_property",
+            [TypeTag(StructTag.from_str("0x4::token::Token"))],
+            transaction_arguments,
+        )
+
+        signed_transaction = await self.client.create_bcs_signed_transaction(
+            creator, TransactionPayload(payload)
+        )
+        return await self.client.submit_bcs_transaction(signed_transaction)
+
+    async def transfer_token(
+            self,
+            creator: Account,
+            token: AccountAddress,
+            recipient: AccountAddress,
+    ):
+        transaction_arguments = [
+            TransactionArgument(token, Serializer.struct),
+            TransactionArgument(recipient, Serializer.struct),
+        ]
+
+        payload = EntryFunction.natural(
+            "0x1::object",
+            "transfer",
             [TypeTag(StructTag.from_str("0x4::token::Token"))],
             transaction_arguments,
         )
