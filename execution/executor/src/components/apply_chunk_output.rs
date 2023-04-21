@@ -5,7 +5,9 @@
 #![forbid(unsafe_code)]
 
 use crate::{
-    components::chunk_output::ChunkOutput,
+    components::{
+        chunk_output::ChunkOutput, in_memory_state_calculator_v2::InMemoryStateCalculatorV2,
+    },
     metrics::{APTOS_EXECUTOR_ERRORS, APTOS_EXECUTOR_OTHER_TIMERS_SECONDS},
 };
 use anyhow::{ensure, Result};
@@ -52,8 +54,8 @@ impl ApplyChunkOutput {
             let _timer = APTOS_EXECUTOR_OTHER_TIMERS_SECONDS
                 .with_label_values(&["apply_write_set"])
                 .start_timer();
-            InMemoryStateCalculator::new(base_view.state(), state_cache)
-                .calculate_for_transaction_chunk(&to_keep, new_epoch)?
+            InMemoryStateCalculatorV2::new(base_view.state(), state_cache)
+                .calculate_for_transaction_block(&to_keep, new_epoch)?
         };
 
         // Calculate TransactionData and TransactionInfo, i.e. the ledger history diff.

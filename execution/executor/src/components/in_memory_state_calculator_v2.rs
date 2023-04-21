@@ -39,7 +39,7 @@ pub static NEW_EPOCH_EVENT_KEY: Lazy<EventKey> = Lazy::new(on_chain_config::new_
 ///                                                                          /
 ///                                (creates checkpoint SMT on checkpoint txn)
 ///                                        (creates "latest SMT" on finish())
-pub struct InMemoryStateCalculator {
+pub struct InMemoryStateCalculatorV2 {
     ///// These don't change during the calculation.
     // This makes sure all in-mem nodes seen while proofs were fetched stays in mem during the
     // calculation
@@ -52,17 +52,16 @@ pub struct InMemoryStateCalculator {
     updates_after_latest: HashMap<StateKey, Option<StateValue>>,
     usage: StateStorageUsage,
 
-    //// These changes whenever make_checkpoint() or finish() happens.
+    //// These changes whenever make_checkpoint() happens.
     checkpoint: SparseMerkleTree<StateValue>,
     checkpoint_version: Option<Version>,
     // This doesn't need to be frozen since `_frozen_base` holds a ref to the oldest ancestor
     // already, but frozen SMT is used here anyway to avoid exposing the `batch_update()` interface
     // on the non-frozen SMT.
     latest: FrozenSparseMerkleTree<StateValue>,
-    updates_between_checkpoint_and_latest: HashMap<StateKey, Option<StateValue>>,
 }
 
-impl InMemoryStateCalculator {
+impl InMemoryStateCalculatorV2 {
     pub fn new(base: &StateDelta, state_cache: StateCache) -> Self {
         let StateCache {
             frozen_base,
@@ -77,6 +76,9 @@ impl InMemoryStateCalculator {
             updates_since_base,
         } = base.clone();
 
+        assert!(base_version == current_version);
+        assert!(updates_since_base.len() == 0);
+
         Self {
             _frozen_base: frozen_base,
             proof_reader: ProofReader::new(proofs),
@@ -89,11 +91,10 @@ impl InMemoryStateCalculator {
             checkpoint: base,
             checkpoint_version: base_version,
             latest: current.freeze(),
-            updates_between_checkpoint_and_latest: updates_since_base,
         }
     }
 
-    pub fn calculate_for_transaction_chunk(
+    pub fn calculate_for_transaction_block(
         mut self,
         to_keep: &[(Transaction, ParsedTransactionOutput)],
         new_epoch: bool,
@@ -104,17 +105,26 @@ impl InMemoryStateCalculator {
         Option<EpochState>,
     )> {
         let num_txns = to_keep.len();
-        //let mut state_updates_vec = Vec::with_capacity(num_txns);
-        let mut state_checkpoint_hashes = Vec::with_capacity(num_txns);
 
         let state_updates_vec = Self::get_state_updates(to_keep);
-        let state_checkpoint_hashes = Self::get_state_checkpoint_hashes(state_updates_vec);
 
-        for (txn, txn_output) in to_keep {
-            let (state_updates, state_checkpoint_hash) = self.add_transaction(txn, txn_output)?;
-            //state_updates_vec.push(state_updates);
-            state_checkpoint_hashes.push(state_checkpoint_hash);
+        let mut state_checkpoint_hashes = Vec::with_capacity(num_txns);
+        for i in 0..num_txns - 1 {
+            let (txn, txn_output) = to_keep[i];
+            assert!(!Self::need_checkpoint(txn, txn_output));
+            state_checkpoint_hashes.push(None);
         }
+
+        self.next_version += num_txns as u64;
+        let updates_after_latest = state_updates_vec.iter().flatten().collect();
+        let (txn, txn_output) = to_keep[num_txns - 1];
+        assert!(Self::need_checkpoint(txn, txn_output));
+
+        let state_checkpoint_hash = self.make_checkpoint(updates_after_latest)?;
+        state_checkpoint_hashes.push(Some(state_checkpoint_hash));
+
+        // TODO(grao): state cache, usage!!!
+
         let (result_state, accounts) = self.finish()?;
 
         // Get the updated validator set from updated account state.
@@ -142,20 +152,6 @@ impl InMemoryStateCalculator {
         }
     }
 
-    fn get_state_checkpoint_hashes(
-        to_keep: &[(Transaction, ParsedTransactionOutput)],
-    ) -> Result<Vec<Option<HashValue>>> {
-        let num_txns = to_keep.len();
-        let state_checkpoint_hashes = Vec::with_capacity(num_txns);
-        for i in 0..num_txns {
-            let (txn, txn_output) = to_keep[i];
-            if Self::need_checkpoint(txn, txn_output) {
-                self.make_checkpoint()?;
-            }
-        }
-        Ok(state_checkpoint_hashes)
-    }
-
     fn get_state_updates(
         to_keep: &[(Transaction, ParsedTransactionOutput)],
     ) -> Vec<HashMap<StateKey, Option<StateValue>>> {
@@ -171,38 +167,12 @@ impl InMemoryStateCalculator {
             .collect()
     }
 
-    fn add_transaction(
+    fn make_checkpoint(
         &mut self,
-        txn: &Transaction,
-        txn_output: &ParsedTransactionOutput,
-    ) -> Result<(HashMap<StateKey, Option<StateValue>>, Option<HashValue>)> {
-        let updated_state_kvs = process_write_set(
-            Some(txn),
-            &mut self.state_cache,
-            &mut self.usage,
-            txn_output.write_set().clone(),
-        )?;
-        self.updates_after_latest.extend(updated_state_kvs.clone());
-        self.next_version += 1;
-
-        if txn_output.is_reconfig() {
-            Ok((updated_state_kvs, Some(self.make_checkpoint()?)))
-        } else {
-            match txn {
-                Transaction::BlockMetadata(_) | Transaction::UserTransaction(_) => {
-                    Ok((updated_state_kvs, None))
-                },
-                Transaction::GenesisTransaction(_) | Transaction::StateCheckpoint(_) => {
-                    Ok((updated_state_kvs, Some(self.make_checkpoint()?)))
-                },
-            }
-        }
-    }
-
-    fn make_checkpoint(&mut self) -> Result<HashValue> {
+        updates_after_latest: HashMap<&StateKey, &Option<StateValue>>,
+    ) -> Result<HashValue> {
         // Update SMT.
-        let smt_updates: Vec<_> = self
-            .updates_after_latest
+        let smt_updates: Vec<_> = updates_after_latest
             .iter()
             .map(|(key, value)| (key.hash(), value.as_ref()))
             .collect();
@@ -215,8 +185,6 @@ impl InMemoryStateCalculator {
         self.latest = new_checkpoint.clone();
         self.checkpoint = new_checkpoint.unfreeze();
         self.checkpoint_version = self.next_version.checked_sub(1);
-        self.updates_between_checkpoint_and_latest = HashMap::new();
-        self.updates_after_latest = HashMap::new();
 
         Ok(root_hash)
     }
@@ -237,24 +205,12 @@ impl InMemoryStateCalculator {
     }
 
     fn finish(mut self) -> Result<(StateDelta, HashMap<StateKey, StateValue>)> {
-        let smt_updates: Vec<_> = self
-            .updates_after_latest
-            .iter()
-            .map(|(key, value)| (key.hash(), value.as_ref()))
-            .collect();
-        let latest = self
-            .latest
-            .batch_update(smt_updates, self.usage, &self.proof_reader)?;
-
-        self.updates_between_checkpoint_and_latest
-            .extend(self.updates_after_latest);
-
         let result_state = StateDelta::new(
             self.checkpoint,
             self.checkpoint_version,
-            latest.unfreeze(),
+            self.latest.unfreeze(),
             self.next_version.checked_sub(1),
-            self.updates_between_checkpoint_and_latest,
+            HashMap::new(),
         );
 
         Ok((
@@ -265,65 +221,9 @@ impl InMemoryStateCalculator {
                 .collect(),
         ))
     }
-
-    pub fn calculate_for_write_sets_after_snapshot(
-        mut self,
-        last_checkpoint_index: Option<usize>,
-        write_sets: &[WriteSet],
-    ) -> Result<(Option<HashMap<StateKey, Option<StateValue>>>, StateDelta)> {
-        let idx_after_last_checkpoint = last_checkpoint_index.map_or(0, |idx| idx + 1);
-        let updates_before_last_checkpoint = if idx_after_last_checkpoint != 0 {
-            for write_set in write_sets[0..idx_after_last_checkpoint].iter() {
-                let state_updates = process_write_set(
-                    None,
-                    &mut self.state_cache,
-                    &mut self.usage,
-                    (*write_set).clone(),
-                )?;
-                self.updates_after_latest.extend(state_updates.into_iter());
-                self.next_version += 1;
-            }
-            let updates = self.updates_after_latest.clone();
-            self.make_checkpoint()?;
-            Some(updates)
-        } else {
-            None
-        };
-        for write_set in write_sets[idx_after_last_checkpoint..].iter() {
-            let state_updates = process_write_set(
-                None,
-                &mut self.state_cache,
-                &mut self.usage,
-                (*write_set).clone(),
-            )?;
-            self.updates_after_latest.extend(state_updates.into_iter());
-            self.next_version += 1;
-        }
-        let (result_state, _) = self.finish()?;
-        Ok((updates_before_last_checkpoint, result_state))
-    }
-}
-
-// Checks the write set is a subset of the read set.
-// Updates the `state_cache` to reflect the latest value.
-// Returns all state key-value pair touched.
-pub fn process_write_set(
-    transaction: Option<&Transaction>,
-    state_cache: &mut DashMap<StateKey, Option<StateValue>>,
-    usage: &mut StateStorageUsage,
-    write_set: WriteSet,
-) -> Result<HashMap<StateKey, Option<StateValue>>> {
-    // Find all keys this transaction touches while processing each write op.
-    write_set
-        .into_iter()
-        .map(|(state_key, write_op)| {
-            process_state_key_write_op(transaction, state_cache, usage, state_key, write_op)
-        })
-        .collect::<Result<_>>()
 }
 
 fn process_state_key_write_op(
-    transaction: Option<&Transaction>,
     state_cache: &mut DashMap<StateKey, Option<StateValue>>,
     usage: &mut StateStorageUsage,
     state_key: StateKey,
@@ -339,22 +239,6 @@ fn process_state_key_write_op(
         if let Some(old_value) = old_value_opt {
             usage.remove_item(key_size + old_value.size());
         }
-    } else if let Some(txn) = transaction {
-        ensure_txn_valid_for_vacant_entry(txn)?;
     }
     Ok((state_key, state_value))
-}
-
-fn ensure_txn_valid_for_vacant_entry(transaction: &Transaction) -> Result<()> {
-    // Before writing to an account, VM should always read that account. So we
-    // should not reach this code path. The exception is genesis transaction (and
-    // maybe other writeset transactions).
-    match transaction {
-        Transaction::GenesisTransaction(_) => (),
-        Transaction::BlockMetadata(_) | Transaction::UserTransaction(_) => {
-            bail!("Write set should be a subset of read set.")
-        },
-        Transaction::StateCheckpoint(_) => {},
-    }
-    Ok(())
 }

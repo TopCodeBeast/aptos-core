@@ -1075,6 +1075,7 @@ dependencies = [
  "dashmap",
  "itertools",
  "once_cell",
+ "rayon",
  "serde 1.0.149",
  "thiserror",
 ]
