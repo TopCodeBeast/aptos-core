@@ -25,6 +25,7 @@ pub enum TransactionTypeArg {
     TokenV1NFTMintAndTransferParallel,
     TokenV1FTMintAndStore,
     TokenV1FTMintAndTransfer,
+    Batch100Transfer,
 }
 
 impl Default for TransactionTypeArg {
@@ -118,6 +119,9 @@ impl TransactionTypeArg {
                 entry_point: EntryPoints::TokenV1MintAndTransferFT,
                 num_modules: 1,
                 use_account_pool: false,
+            },
+            TransactionTypeArg::Batch100Transfer => {
+                TransactionType::BatchTransfer { batch_size: 100 }
             },
         }
     }
