@@ -2,6 +2,7 @@
 title: "Move Reference Documentation"
 id: "move"
 ---
+import Link from "@site/src/components/Link";
 
 # Aptos Move Reference
 
@@ -9,7 +10,7 @@ Use the [Move language](../move/move-on-aptos.md) reference files below to devel
 
 | Package | Latest | Mainnet | Testnet | Devnet |
 |-|-|-|-|-|
-| *Aptos tokens* |[main](https://github.com/aptos-labs/aptos-core/blob/main/aptos-move/framework/aptos-token/doc/overview.md) | [mainnet](https://github.com/aptos-labs/aptos-core/blob/mainnet/aptos-move/framework/aptos-token/doc/overview.md) | [testnet](https://github.com/aptos-labs/aptos-core/blob/testnet/aptos-move/framework/aptos-token/doc/overview.md) | [devnet](https://github.com/aptos-labs/aptos-core/blob/devnet/aptos-move/framework/aptos-token/doc/overview.md) |
-| *Aptos framework* |[main](https://github.com/aptos-labs/aptos-core/blob/main/aptos-move/framework/aptos-framework/doc/overview.md) | [mainnet](https://github.com/aptos-labs/aptos-core/blob/mainnet/aptos-move/framework/aptos-framework/doc/overview.md) | [testnet](https://github.com/aptos-labs/aptos-core/blob/testnet/aptos-move/framework/aptos-framework/doc/overview.md) | [devnet](https://github.com/aptos-labs/aptos-core/blob/devnet/aptos-move/framework/aptos-framework/doc/overview.md) |
-| *Aptos stdlib* |[main](https://github.com/aptos-labs/aptos-core/blob/main/aptos-move/framework/aptos-stdlib/doc/overview.md) | [mainnet](https://github.com/aptos-labs/aptos-core/blob/mainnet/aptos-move/framework/aptos-stdlib/doc/overview.md) | [testnet](https://github.com/aptos-labs/aptos-core/blob/testnet/aptos-move/framework/aptos-stdlib/doc/overview.md) | [devnet](https://github.com/aptos-labs/aptos-core/blob/devnet/aptos-move/framework/aptos-stdlib/doc/overview.md) |
-| *Move stdlib* |[main](https://github.com/aptos-labs/aptos-core/blob/main/aptos-move/framework/move-stdlib/doc/overview.md) | [mainnet](https://github.com/aptos-labs/aptos-core/blob/mainnet/aptos-move/framework/move-stdlib/doc/overview.md) | [testnet](https://github.com/aptos-labs/aptos-core/blob/testnet/aptos-move/framework/move-stdlib/doc/overview.md) | [devnet](https://github.com/aptos-labs/aptos-core/blob/devnet/aptos-move/framework/move-stdlib/doc/overview.md) |
+| *Aptos tokens* | <Link href="/reference/move-framework?branch=main&page=/aptos-token/doc/overview.md">main</Link> | <Link href="/reference/move-framework?branch=mainnet&page=/aptos-token/doc/overview.md">mainnet</Link> | <Link href="/reference/move-framework?branch=testnet&page=/aptos-token/doc/overview.md">testnet</Link> | <Link href="/reference/move-framework?branch=devnet&page=/aptos-token/doc/overview.md">devnet</Link> | 
+| *Aptos framework* | <Link href="/reference/move-framework?branch=main&page=/aptos-framework/doc/overview.md">main</Link> | <Link href="/reference/move-framework?branch=mainnet&page=/aptos-framework/doc/overview.md">mainnet</Link> | <Link href="/reference/move-framework?branch=testnet&page=/aptos-framework/doc/overview.md">testnet</Link> | <Link href="/reference/move-framework?branch=devnet&page=/aptos-framework/doc/overview.md">devnet</Link> | 
+| *Aptos stdlib* | <Link href="/reference/move-framework?branch=main&page=/aptos-stdlib/doc/overview.md">main</Link> | <Link href="/reference/move-framework?branch=mainnet&page=/aptos-stdlib/doc/overview.md">mainnet</Link> | <Link href="/reference/move-framework?branch=testnet&page=/aptos-stdlib/doc/overview.md">testnet</Link> | <Link href="/reference/move-framework?branch=devnet&page=/aptos-stdlib/doc/overview.md">devnet</Link> | 
+| *Move stdlib* | <Link href="/reference/move-framework?branch=main&page=/move-stdlib/doc/overview.md">main</Link> | <Link href="/reference/move-framework?branch=mainnet&page=/move-stdlib/doc/overview.md">mainnet</Link> | <Link href="/reference/move-framework?branch=testnet&page=/move-stdlib/doc/overview.md">testnet</Link> | <Link href="/reference/move-framework?branch=devnet&page=/move-stdlib/doc/overview.md">devnet</Link> | 
