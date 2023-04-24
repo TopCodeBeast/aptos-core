@@ -13,8 +13,9 @@ use aptos_logger::{error, info, warn};
 use aptos_moving_average::MovingAverage;
 use aptos_protos::{
     indexer::v1::{
-        indexer_data_server::IndexerData, ChainMetadata, GetTransactionsRequest,
-        GetTransactionsResponse,
+        get_transactions_response::{GetTransactionsData, Response as GetTransactionsResponseEnum},
+        indexer_data_server::IndexerData,
+        ChainMetadata, GetTransactionsRequest, GetTransactionsResponse,
     },
     transaction::testing1::v1::Transaction,
 };
@@ -245,15 +246,17 @@ fn get_transactions_response_builder(
     chain_id: u32,
 ) -> GetTransactionsResponse {
     GetTransactionsResponse {
-        chain_metadata: Some(ChainMetadata {
-            chain_id: Some(chain_id as u64),
-        }),
-        version: data.first().map(|(_, version)| *version),
-        transactions: data
-            .into_iter()
-            .map(|(encoded, _)| Transaction::decode(encoded.as_bytes()).unwrap())
-            .collect(),
-        ..GetTransactionsResponse::default()
+        response: Some(GetTransactionsResponseEnum::Data(GetTransactionsData {
+            chain_metadata: Some(ChainMetadata {
+                chain_id: Some(chain_id as u64),
+            }),
+            version: data.first().map(|(_, version)| *version),
+            transactions: data
+                .into_iter()
+                .map(|(encoded, _)| Transaction::decode(encoded.as_bytes()).unwrap())
+                .collect(),
+            ..GetTransactionsData::default()
+        })),
     }
 }
 

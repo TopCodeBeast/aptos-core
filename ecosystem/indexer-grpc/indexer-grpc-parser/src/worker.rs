@@ -24,6 +24,7 @@ use aptos_indexer_grpc_utils::{config::IndexerGrpcProcessorConfig, constants::BL
 use aptos_logger::{error, info};
 use aptos_moving_average::MovingAverage;
 use aptos_protos::indexer::v1::{
+    get_transactions_response::Response as GetTransactionsResponseEnum,
     indexer_data_client::IndexerDataClient, GetTransactionsRequest, GetTransactionsResponse,
 };
 use diesel::{
@@ -214,7 +215,13 @@ impl Worker {
                         continue;
                     },
                 };
-                let transactions = next_stream.transactions;
+                let transactions = match next_stream.response {
+                    None => break,
+                    Some(GetTransactionsResponseEnum::Data(data)) => data.transactions,
+                    Some(GetTransactionsResponseEnum::Status(_)) => {
+                        unreachable!("Not possible to get a status frame here.")
+                    },
+                };
 
                 let current_batch_size = transactions.len();
                 if current_batch_size == 0 {
@@ -387,9 +394,17 @@ impl Worker {
         &self,
         response: GetTransactionsResponse,
     ) -> anyhow::Result<()> {
-        let grpc_chain_id = response
+        let response = response
+            .response
+            .ok_or_else(|| anyhow::Error::msg("Response doesn't exist."))?;
+        let response_data = match response {
+            GetTransactionsResponseEnum::Data(data) => data,
+            GetTransactionsResponseEnum::Status(_) => {
+                return Err(anyhow::Error::msg("Status is not expected."));
+            },
+        };
+        let grpc_chain_id = response_data
             .chain_metadata
-            .as_ref()
             .ok_or_else(|| anyhow::Error::msg("Chain Medata doesn't exist."))?
             .chain_id
             .ok_or_else(|| anyhow::Error::msg("Chain Id doesn't exist."))?;

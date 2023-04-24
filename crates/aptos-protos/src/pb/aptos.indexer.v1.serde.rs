@@ -95,6 +95,118 @@ impl<'de> serde::Deserialize<'de> for ChainMetadata {
         deserializer.deserialize_struct("aptos.indexer.v1.ChainMetadata", FIELDS, GeneratedVisitor)
     }
 }
+impl serde::Serialize for DataStatus {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.last_version_processed.is_some() {
+            len += 1;
+        }
+        if self.last_version_timestamp.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("aptos.indexer.v1.DataStatus", len)?;
+        if let Some(v) = self.last_version_processed.as_ref() {
+            struct_ser.serialize_field("lastVersionProcessed", ToString::to_string(&v).as_str())?;
+        }
+        if let Some(v) = self.last_version_timestamp.as_ref() {
+            struct_ser.serialize_field("lastVersionTimestamp", v)?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for DataStatus {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "last_version_processed",
+            "lastVersionProcessed",
+            "last_version_timestamp",
+            "lastVersionTimestamp",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            LastVersionProcessed,
+            LastVersionTimestamp,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "lastVersionProcessed" | "last_version_processed" => Ok(GeneratedField::LastVersionProcessed),
+                            "lastVersionTimestamp" | "last_version_timestamp" => Ok(GeneratedField::LastVersionTimestamp),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = DataStatus;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct aptos.indexer.v1.DataStatus")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<DataStatus, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut last_version_processed__ = None;
+                let mut last_version_timestamp__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::LastVersionProcessed => {
+                            if last_version_processed__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("lastVersionProcessed"));
+                            }
+                            last_version_processed__ =
+                                map.next_value::<::std::option::Option<::pbjson::private::NumberDeserialize<_>>>()?.map(|x| x.0)
+                            ;
+                        }
+                        GeneratedField::LastVersionTimestamp => {
+                            if last_version_timestamp__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("lastVersionTimestamp"));
+                            }
+                            last_version_timestamp__ = map.next_value()?;
+                        }
+                    }
+                }
+                Ok(DataStatus {
+                    last_version_processed: last_version_processed__,
+                    last_version_timestamp: last_version_timestamp__,
+                })
+            }
+        }
+        deserializer.deserialize_struct("aptos.indexer.v1.DataStatus", FIELDS, GeneratedVisitor)
+    }
+}
 impl serde::Serialize for GetTransactionsRequest {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
@@ -237,6 +349,115 @@ impl serde::Serialize for GetTransactionsResponse {
     {
         use serde::ser::SerializeStruct;
         let mut len = 0;
+        if self.response.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("aptos.indexer.v1.GetTransactionsResponse", len)?;
+        if let Some(v) = self.response.as_ref() {
+            match v {
+                get_transactions_response::Response::Data(v) => {
+                    struct_ser.serialize_field("data", v)?;
+                }
+                get_transactions_response::Response::Status(v) => {
+                    struct_ser.serialize_field("status", v)?;
+                }
+            }
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "data",
+            "status",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            Data,
+            Status,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "data" => Ok(GeneratedField::Data),
+                            "status" => Ok(GeneratedField::Status),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = GetTransactionsResponse;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct aptos.indexer.v1.GetTransactionsResponse")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<GetTransactionsResponse, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut response__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::Data => {
+                            if response__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("data"));
+                            }
+                            response__ = map.next_value::<::std::option::Option<_>>()?.map(get_transactions_response::Response::Data)
+;
+                        }
+                        GeneratedField::Status => {
+                            if response__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("status"));
+                            }
+                            response__ = map.next_value::<::std::option::Option<_>>()?.map(get_transactions_response::Response::Status)
+;
+                        }
+                    }
+                }
+                Ok(GetTransactionsResponse {
+                    response: response__,
+                })
+            }
+        }
+        deserializer.deserialize_struct("aptos.indexer.v1.GetTransactionsResponse", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for get_transactions_response::GetTransactionsData {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
         if self.version.is_some() {
             len += 1;
         }
@@ -249,7 +470,7 @@ impl serde::Serialize for GetTransactionsResponse {
         if self.chain_metadata.is_some() {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("aptos.indexer.v1.GetTransactionsResponse", len)?;
+        let mut struct_ser = serializer.serialize_struct("aptos.indexer.v1.GetTransactionsResponse.GetTransactionsData", len)?;
         if let Some(v) = self.version.as_ref() {
             struct_ser.serialize_field("version", ToString::to_string(&v).as_str())?;
         }
@@ -265,7 +486,7 @@ impl serde::Serialize for GetTransactionsResponse {
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
+impl<'de> serde::Deserialize<'de> for get_transactions_response::GetTransactionsData {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -319,13 +540,13 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = GetTransactionsResponse;
+            type Value = get_transactions_response::GetTransactionsData;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct aptos.indexer.v1.GetTransactionsResponse")
+                formatter.write_str("struct aptos.indexer.v1.GetTransactionsResponse.GetTransactionsData")
             }
 
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<GetTransactionsResponse, V::Error>
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<get_transactions_response::GetTransactionsData, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
@@ -363,7 +584,7 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
                         }
                     }
                 }
-                Ok(GetTransactionsResponse {
+                Ok(get_transactions_response::GetTransactionsData {
                     version: version__,
                     timestamp: timestamp__,
                     transactions: transactions__.unwrap_or_default(),
@@ -371,6 +592,6 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
                 })
             }
         }
-        deserializer.deserialize_struct("aptos.indexer.v1.GetTransactionsResponse", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("aptos.indexer.v1.GetTransactionsResponse.GetTransactionsData", FIELDS, GeneratedVisitor)
     }
 }
