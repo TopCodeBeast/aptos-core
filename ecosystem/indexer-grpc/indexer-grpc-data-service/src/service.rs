@@ -12,7 +12,7 @@ use aptos_indexer_grpc_utils::{
 use aptos_logger::{error, info, warn};
 use aptos_moving_average::MovingAverage;
 use aptos_protos::{
-    indexer::v1::{raw_data_server::RawData, GetTransactionsRequest, GetTransactionsResponse},
+    indexer::v1::{raw_data_server::RawData, GetTransactionsRequest, TransactionsResponse},
     transaction::testing1::v1::Transaction,
 };
 use futures::Stream;
@@ -22,7 +22,7 @@ use tokio::sync::mpsc::{channel, error::TrySendError};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-type ResponseStream = Pin<Box<dyn Stream<Item = Result<GetTransactionsResponse, Status>> + Send>>;
+type ResponseStream = Pin<Box<dyn Stream<Item = Result<TransactionsResponse, Status>> + Send>>;
 
 const MOVING_AVERAGE_WINDOW_SIZE: u64 = 10_000;
 // When trying to fetch beyond the current head of cache, the server will retry after this duration.
@@ -187,7 +187,7 @@ impl RawData for RawDataServer {
                 let end_of_batch_version = transaction_data.last().unwrap().1;
                 let resp_item =
                     get_transactions_response_builder(transaction_data, chain_id as u32);
-                match tx.try_send(Result::<GetTransactionsResponse, Status>::Ok(resp_item)) {
+                match tx.try_send(Result::<TransactionsResponse, Status>::Ok(resp_item)) {
                     Ok(_) => {},
                     Err(TrySendError::Full(_)) => {
                         warn!(
@@ -240,15 +240,15 @@ impl RawData for RawDataServer {
 fn get_transactions_response_builder(
     data: Vec<EncodedTransactionWithVersion>,
     chain_id: u32,
-) -> GetTransactionsResponse {
-    GetTransactionsResponse {
+) -> TransactionsResponse {
+    TransactionsResponse {
         chain_id: Some(chain_id as u64),
         starting_version: data.first().map(|(_, version)| *version),
         transactions: data
             .into_iter()
             .map(|(encoded, _)| Transaction::decode(encoded.as_bytes()).unwrap())
             .collect(),
-        ..GetTransactionsResponse::default()
+        ..TransactionsResponse::default()
     }
 }
 
