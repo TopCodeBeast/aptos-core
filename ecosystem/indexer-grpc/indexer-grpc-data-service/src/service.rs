@@ -12,11 +12,7 @@ use aptos_indexer_grpc_utils::{
 use aptos_logger::{error, info, warn};
 use aptos_moving_average::MovingAverage;
 use aptos_protos::{
-    indexer::v1::{
-        get_transactions_response::{GetTransactionsData, Response as GetTransactionsResponseEnum},
-        indexer_data_server::IndexerData,
-        ChainMetadata, GetTransactionsRequest, GetTransactionsResponse,
-    },
+    indexer::v1::{raw_data_server::RawData, GetTransactionsRequest, GetTransactionsResponse},
     transaction::testing1::v1::Transaction,
 };
 use futures::Stream;
@@ -42,12 +38,12 @@ const RESPONSE_CHANNEL_FULL_BACKOFF_DURATION_MS: u64 = 1000;
 // the server will not fetch more data from the cache and file store until the channel is not full.
 const MAX_RESPONSE_CHANNEL_SIZE: usize = 40;
 
-pub struct IndexerDataServer {
+pub struct RawDataServer {
     pub redis_client: Arc<redis::Client>,
     pub server_config: IndexerGrpcConfig,
 }
 
-impl IndexerDataServer {
+impl RawDataServer {
     pub fn new(config: IndexerGrpcConfig) -> Self {
         Self {
             redis_client: Arc::new(
@@ -69,9 +65,9 @@ enum TransactionsDataStatus {
     DataGap,
 }
 
-/// IndexerDataServer handles the get transactions requests from cache and file store.
+/// RawDataServer handles the get transactions requests from cache and file store.
 #[tonic::async_trait]
-impl IndexerData for IndexerDataServer {
+impl RawData for RawDataServer {
     type GetTransactionsStream = ResponseStream;
 
     /// GetTransactionsStream is a streaming GRPC endpoint:
@@ -246,17 +242,13 @@ fn get_transactions_response_builder(
     chain_id: u32,
 ) -> GetTransactionsResponse {
     GetTransactionsResponse {
-        response: Some(GetTransactionsResponseEnum::Data(GetTransactionsData {
-            chain_metadata: Some(ChainMetadata {
-                chain_id: Some(chain_id as u64),
-            }),
-            version: data.first().map(|(_, version)| *version),
-            transactions: data
-                .into_iter()
-                .map(|(encoded, _)| Transaction::decode(encoded.as_bytes()).unwrap())
-                .collect(),
-            ..GetTransactionsData::default()
-        })),
+        chain_id: Some(chain_id as u64),
+        starting_version: data.first().map(|(_, version)| *version),
+        transactions: data
+            .into_iter()
+            .map(|(encoded, _)| Transaction::decode(encoded.as_bytes()).unwrap())
+            .collect(),
+        ..GetTransactionsResponse::default()
     }
 }
 

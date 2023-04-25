@@ -2,16 +2,16 @@
 
 // @generated
 /// Generated client implementations.
-pub mod indexer_data_client {
+pub mod raw_data_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     ///
     #[derive(Debug, Clone)]
-    pub struct IndexerDataClient<T> {
+    pub struct RawDataClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl IndexerDataClient<tonic::transport::Channel> {
+    impl RawDataClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -22,7 +22,7 @@ pub mod indexer_data_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> IndexerDataClient<T>
+    impl<T> RawDataClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -40,7 +40,7 @@ pub mod indexer_data_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> IndexerDataClient<InterceptedService<T, F>>
+        ) -> RawDataClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -54,7 +54,7 @@ pub mod indexer_data_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            IndexerDataClient::new(InterceptedService::new(inner, interceptor))
+            RawDataClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -71,7 +71,7 @@ pub mod indexer_data_client {
             self.inner = self.inner.accept_compressed(encoding);
             self
         }
-        /** Get transactions without any filtering from starting version and end if transaction count is present.
+        /** Get transactions batch without any filtering from starting version and end if transaction count is present.
 */
         pub async fn get_transactions(
             &mut self,
@@ -91,26 +91,26 @@ pub mod indexer_data_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/aptos.indexer.v1.IndexerData/GetTransactions",
+                "/aptos.indexer.v1.RawData/GetTransactions",
             );
             self.inner.server_streaming(request.into_request(), path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod indexer_data_server {
+pub mod raw_data_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    ///Generated trait containing gRPC methods that should be implemented for use with IndexerDataServer.
+    ///Generated trait containing gRPC methods that should be implemented for use with RawDataServer.
     #[async_trait]
-    pub trait IndexerData: Send + Sync + 'static {
+    pub trait RawData: Send + Sync + 'static {
         ///Server streaming response type for the GetTransactions method.
         type GetTransactionsStream: futures_core::Stream<
                 Item = Result<super::GetTransactionsResponse, tonic::Status>,
             >
             + Send
             + 'static;
-        /** Get transactions without any filtering from starting version and end if transaction count is present.
+        /** Get transactions batch without any filtering from starting version and end if transaction count is present.
 */
         async fn get_transactions(
             &self,
@@ -119,13 +119,13 @@ pub mod indexer_data_server {
     }
     ///
     #[derive(Debug)]
-    pub struct IndexerDataServer<T: IndexerData> {
+    pub struct RawDataServer<T: RawData> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: IndexerData> IndexerDataServer<T> {
+    impl<T: RawData> RawDataServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -159,9 +159,9 @@ pub mod indexer_data_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for IndexerDataServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for RawDataServer<T>
     where
-        T: IndexerData,
+        T: RawData,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -177,11 +177,11 @@ pub mod indexer_data_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/aptos.indexer.v1.IndexerData/GetTransactions" => {
+                "/aptos.indexer.v1.RawData/GetTransactions" => {
                     #[allow(non_camel_case_types)]
-                    struct GetTransactionsSvc<T: IndexerData>(pub Arc<T>);
+                    struct GetTransactionsSvc<T: RawData>(pub Arc<T>);
                     impl<
-                        T: IndexerData,
+                        T: RawData,
                     > tonic::server::ServerStreamingService<
                         super::GetTransactionsRequest,
                     > for GetTransactionsSvc<T> {
@@ -234,7 +234,7 @@ pub mod indexer_data_server {
             }
         }
     }
-    impl<T: IndexerData> Clone for IndexerDataServer<T> {
+    impl<T: RawData> Clone for RawDataServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -244,7 +244,7 @@ pub mod indexer_data_server {
             }
         }
     }
-    impl<T: IndexerData> Clone for _Inner<T> {
+    impl<T: RawData> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(self.0.clone())
         }
@@ -254,7 +254,7 @@ pub mod indexer_data_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: IndexerData> tonic::server::NamedService for IndexerDataServer<T> {
-        const NAME: &'static str = "aptos.indexer.v1.IndexerData";
+    impl<T: RawData> tonic::server::NamedService for RawDataServer<T> {
+        const NAME: &'static str = "aptos.indexer.v1.RawData";
     }
 }

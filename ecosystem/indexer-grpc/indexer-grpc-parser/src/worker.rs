@@ -24,8 +24,7 @@ use aptos_indexer_grpc_utils::{config::IndexerGrpcProcessorConfig, constants::BL
 use aptos_logger::{error, info};
 use aptos_moving_average::MovingAverage;
 use aptos_protos::indexer::v1::{
-    get_transactions_response::Response as GetTransactionsResponseEnum,
-    indexer_data_client::IndexerDataClient, GetTransactionsRequest, GetTransactionsResponse,
+    raw_data_client::RawDataClient, GetTransactionsRequest, GetTransactionsResponse,
 };
 use diesel::{
     pg::PgConnection,
@@ -75,7 +74,7 @@ impl Worker {
             "[Parser] Connecting to GRPC endpoint",
         );
 
-        let mut rpc_client = match IndexerDataClient::connect(format!(
+        let mut rpc_client = match RawDataClient::connect(format!(
             "http://{}",
             self.config.indexer_grpc_address.clone()
         ))
@@ -215,13 +214,7 @@ impl Worker {
                         continue;
                     },
                 };
-                let transactions = match next_stream.response {
-                    None => break,
-                    Some(GetTransactionsResponseEnum::Data(data)) => data.transactions,
-                    Some(GetTransactionsResponseEnum::Status(_)) => {
-                        unreachable!("Not possible to get a status frame here.")
-                    },
-                };
+                let transactions = next_stream.transactions;
 
                 let current_batch_size = transactions.len();
                 if current_batch_size == 0 {
@@ -394,18 +387,7 @@ impl Worker {
         &self,
         response: GetTransactionsResponse,
     ) -> anyhow::Result<()> {
-        let response = response
-            .response
-            .ok_or_else(|| anyhow::Error::msg("Response doesn't exist."))?;
-        let response_data = match response {
-            GetTransactionsResponseEnum::Data(data) => data,
-            GetTransactionsResponseEnum::Status(_) => {
-                return Err(anyhow::Error::msg("Status is not expected."));
-            },
-        };
-        let grpc_chain_id = response_data
-            .chain_metadata
-            .ok_or_else(|| anyhow::Error::msg("Chain Medata doesn't exist."))?
+        let grpc_chain_id = response
             .chain_id
             .ok_or_else(|| anyhow::Error::msg("Chain Id doesn't exist."))?;
         let _chain_id = self.check_or_update_chain_id(grpc_chain_id as i64).await?;
@@ -420,7 +402,6 @@ pub fn grpc_request_builder(
     let mut request = tonic::Request::new(GetTransactionsRequest {
         starting_version: Some(starting_version),
         transactions_count: None,
-        ..GetTransactionsRequest::default()
     });
     request.metadata_mut().insert(
         aptos_indexer_grpc_utils::constants::GRPC_AUTH_TOKEN_HEADER,
