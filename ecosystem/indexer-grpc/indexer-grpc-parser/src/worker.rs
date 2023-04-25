@@ -24,7 +24,7 @@ use aptos_indexer_grpc_utils::{config::IndexerGrpcProcessorConfig, constants::BL
 use aptos_logger::{error, info};
 use aptos_moving_average::MovingAverage;
 use aptos_protos::indexer::v1::{
-    raw_data_client::RawDataClient, GetTransactionsRequest, GetTransactionsResponse,
+    raw_data_client::RawDataClient, GetTransactionsRequest, TransactionsResponse,
 };
 use diesel::{
     pg::PgConnection,
@@ -385,7 +385,7 @@ impl Worker {
     /// GRPC validation
     pub async fn validate_grpc_chain_id(
         &self,
-        response: GetTransactionsResponse,
+        response: TransactionsResponse,
     ) -> anyhow::Result<()> {
         let grpc_chain_id = response
             .chain_id

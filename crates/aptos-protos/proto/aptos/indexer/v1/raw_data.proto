@@ -17,8 +17,8 @@ message GetTransactionsRequest {
   optional uint64 transactions_count = 2;
 }
 
-// GetTransactionsResponse is a batch of transactions.
-message GetTransactionsResponse {
+// TransactionsResponse is a batch of transactions.
+message TransactionsResponse {
     // Required; start version of current batch.
     optional uint64 starting_version = 1;
 
@@ -34,5 +34,5 @@ message GetTransactionsResponse {
 
 service RawData {
     // Get transactions batch without any filtering from starting version and end if transaction count is present.
-    rpc GetTransactions(GetTransactionsRequest) returns (stream GetTransactionsResponse);
+    rpc GetTransactions(GetTransactionsRequest) returns (stream TransactionsResponse);
 }

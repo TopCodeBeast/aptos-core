@@ -87,8 +87,8 @@ impl FullnodeData for FullnodeDataService {
     /// This function is required by the GRPC tonic server. It basically handles the request.
     /// Given we want to persist the stream for better performance, our approach is that when
     /// we receive a request, we will return a stream. Then as we process transactions, we
-    /// wrap those into a GetTransactionsResponse that we then push into the stream.
-    /// There are 2 types of GetTransactionsResponse:
+    /// wrap those into a TransactionsResponse that we then push into the stream.
+    /// There are 2 types of TransactionsResponse:
     /// Status - sends events back to the client, such as init stream and batch end
     /// Transaction - sends encoded transactions lightly wrapped
     async fn get_transactions_from_node(

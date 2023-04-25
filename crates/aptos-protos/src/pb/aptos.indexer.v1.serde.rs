@@ -115,7 +115,7 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsRequest {
         deserializer.deserialize_struct("aptos.indexer.v1.GetTransactionsRequest", FIELDS, GeneratedVisitor)
     }
 }
-impl serde::Serialize for GetTransactionsResponse {
+impl serde::Serialize for TransactionsResponse {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -135,7 +135,7 @@ impl serde::Serialize for GetTransactionsResponse {
         if self.chain_id.is_some() {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("aptos.indexer.v1.GetTransactionsResponse", len)?;
+        let mut struct_ser = serializer.serialize_struct("aptos.indexer.v1.TransactionsResponse", len)?;
         if let Some(v) = self.starting_version.as_ref() {
             struct_ser.serialize_field("startingVersion", ToString::to_string(&v).as_str())?;
         }
@@ -151,7 +151,7 @@ impl serde::Serialize for GetTransactionsResponse {
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
+impl<'de> serde::Deserialize<'de> for TransactionsResponse {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -207,13 +207,13 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = GetTransactionsResponse;
+            type Value = TransactionsResponse;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct aptos.indexer.v1.GetTransactionsResponse")
+                formatter.write_str("struct aptos.indexer.v1.TransactionsResponse")
             }
 
-            fn visit_map<V>(self, mut map: V) -> std::result::Result<GetTransactionsResponse, V::Error>
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<TransactionsResponse, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
@@ -253,7 +253,7 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
                         }
                     }
                 }
-                Ok(GetTransactionsResponse {
+                Ok(TransactionsResponse {
                     starting_version: starting_version__,
                     starting_timestamp: starting_timestamp__,
                     transactions: transactions__.unwrap_or_default(),
@@ -261,6 +261,6 @@ impl<'de> serde::Deserialize<'de> for GetTransactionsResponse {
                 })
             }
         }
-        deserializer.deserialize_struct("aptos.indexer.v1.GetTransactionsResponse", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("aptos.indexer.v1.TransactionsResponse", FIELDS, GeneratedVisitor)
     }
 }

@@ -77,7 +77,7 @@ pub mod raw_data_client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetTransactionsRequest>,
         ) -> Result<
-            tonic::Response<tonic::codec::Streaming<super::GetTransactionsResponse>>,
+            tonic::Response<tonic::codec::Streaming<super::TransactionsResponse>>,
             tonic::Status,
         > {
             self.inner
@@ -106,7 +106,7 @@ pub mod raw_data_server {
     pub trait RawData: Send + Sync + 'static {
         ///Server streaming response type for the GetTransactions method.
         type GetTransactionsStream: futures_core::Stream<
-                Item = Result<super::GetTransactionsResponse, tonic::Status>,
+                Item = Result<super::TransactionsResponse, tonic::Status>,
             >
             + Send
             + 'static;
@@ -185,7 +185,7 @@ pub mod raw_data_server {
                     > tonic::server::ServerStreamingService<
                         super::GetTransactionsRequest,
                     > for GetTransactionsSvc<T> {
-                        type Response = super::GetTransactionsResponse;
+                        type Response = super::TransactionsResponse;
                         type ResponseStream = T::GetTransactionsStream;
                         type Future = BoxFuture<
                             tonic::Response<Self::ResponseStream>,
